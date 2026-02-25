@@ -1,7 +1,8 @@
 <?xml version="1.0" ?>
 <sdf version="1.9">
   <model name="ugv_1">
-    <pose>0 0 0.12 0 0 0</pose>
+    <!-- Place base center at 0.17 so wheels contact z=0 without penetration -->
+    <pose>0 0 0.17 0 0 0</pose>
 
     <link name="base_link">
       <inertial>
@@ -23,24 +24,40 @@
       </visual>
     </link>
 
-    <!-- Simple wheels as separate links (for diff drive system) -->
+    <!-- Wheels: z=-0.09 relative to base center, and rotated so cylinder axis aligns to joint y-axis -->
     <link name="left_wheel">
-      <pose>0 0.19 0.04 0 0 0</pose>
-      <collision name="c">
+      <pose>0 0.19 -0.09 1.5708 0 0</pose>
+      <inertial>
+        <mass>0.2</mass>
+        <inertia>
+          <ixx>0.0005</ixx><ixy>0</ixy><ixz>0</ixz>
+          <iyy>0.0003</iyy><iyz>0</iyz>
+          <izz>0.0005</izz>
+        </inertia>
+      </inertial>
+      <collision name="left_wheel_collision">
         <geometry><cylinder><radius>0.08</radius><length>0.04</length></cylinder></geometry>
       </collision>
-      <visual name="v">
+      <visual name="left_wheel_visual">
         <geometry><cylinder><radius>0.08</radius><length>0.04</length></cylinder></geometry>
         <material><ambient>0.1 0.1 0.1 1</ambient></material>
       </visual>
     </link>
 
     <link name="right_wheel">
-      <pose>0 -0.19 0.04 0 0 0</pose>
-      <collision name="c">
+      <pose>0 -0.19 -0.09 1.5708 0 0</pose>
+      <inertial>
+        <mass>0.2</mass>
+        <inertia>
+          <ixx>0.0005</ixx><ixy>0</ixy><ixz>0</ixz>
+          <iyy>0.0003</iyy><iyz>0</iyz>
+          <izz>0.0005</izz>
+        </inertia>
+      </inertial>
+      <collision name="right_wheel_collision">
         <geometry><cylinder><radius>0.08</radius><length>0.04</length></cylinder></geometry>
       </collision>
-      <visual name="v">
+      <visual name="right_wheel_visual">
         <geometry><cylinder><radius>0.08</radius><length>0.04</length></cylinder></geometry>
         <material><ambient>0.1 0.1 0.1 1</ambient></material>
       </visual>
@@ -62,7 +79,6 @@
       </axis>
     </joint>
 
-    <!-- DiffDrive system plugin -->
     <plugin filename="gz-sim-diff-drive-system" name="gz::sim::systems::DiffDrive">
       <left_joint>left_wheel_joint</left_joint>
       <right_joint>right_wheel_joint</right_joint>
@@ -70,18 +86,14 @@
       <wheel_separation>0.38</wheel_separation>
       <wheel_radius>0.08</wheel_radius>
 
-      <!-- GZ transport topics -->
       <topic>/model/ugv_1/cmd_vel</topic>
 
-      <!-- Odometry output -->
       <odom_topic>/model/ugv_1/odometry</odom_topic>
       <odom_frame>odom</odom_frame>
       <robot_base_frame>base_link</robot_base_frame>
 
-      <!-- Limits -->
       <max_linear_velocity>1.0</max_linear_velocity>
       <max_angular_velocity>2.0</max_angular_velocity>
     </plugin>
-
   </model>
 </sdf>

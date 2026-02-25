@@ -11,3 +11,6 @@ __pycache__/
 
 # Colcon
 *.colcon*
+
+#Docs
+docs/
