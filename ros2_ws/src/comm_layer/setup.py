@@ -21,6 +21,8 @@ setup(
     entry_points={
         'console_scripts': [
             'network_simulator_node = comm_layer.network_simulator_node:main',
+            'uav_mission_publisher_node = comm_layer.uav_mission_publisher_node:main',
+            'ugv_mission_receiver_node = comm_layer.ugv_mission_receiver_node:main',
         ],
     },
 )

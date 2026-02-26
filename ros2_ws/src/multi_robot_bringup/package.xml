@@ -23,6 +23,7 @@
   <!-- Description packages launched from here -->
   <exec_depend>uav_description</exec_depend>
   <exec_depend>ugv_description</exec_depend>
+  <exec_depend>comm_layer</exec_depend>
 
   <!-- Optional visualization -->
   <exec_depend>rviz2</exec_depend>

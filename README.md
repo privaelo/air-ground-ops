@@ -10,55 +10,98 @@ colcon build --symlink-install
 source install/setup.bash
 ```
 
-Launch simulation (default world pinned to `empty.sdf` with ground plane):
+## Phase 1 Baseline (No Mission Comms)
 
 ```bash
 ros2 launch multi_robot_bringup simulation.launch.py use_rviz:=false
 ```
 
-Launch simulation with explicit world and spawn positions:
+## Phase 2 Realistic Environment Defaults
+
+The default world is now a local obstacle world:
+- `ros2_ws/src/multi_robot_bringup/worlds/urban_obstacles.sdf`
+- UAV default spawn around 5m altitude
+- UAV/UGV are spatially separated by default
+
+Launch with explicit world and spawn overrides:
 
 ```bash
 ros2 launch multi_robot_bringup simulation.launch.py \
   use_rviz:=false \
-  gz_args:='-r empty.sdf' \
-  ugv_spawn_x:=0.0 ugv_spawn_y:=0.0 ugv_spawn_z:=0.0 \
-  uav_spawn_x:=0.0 uav_spawn_y:=0.0 uav_spawn_z:=1.0
+  world_file:=/absolute/path/to/world.sdf \
+  uav_spawn_x:=10.0 uav_spawn_y:=0.0 uav_spawn_z:=5.0 \
+  ugv_spawn_x:=-2.0 ugv_spawn_y:=0.0 ugv_spawn_z:=0.0
 ```
 
-Startup sanity check:
-
-```bash
-ros2 topic echo /ugv_1/odom --once
-```
-
-If stable, initial `pose.pose.position.z` should remain near the expected chassis height (around `0.17`) and not diverge rapidly.
-
-Teleop UGV:
+## UGV Teleop
 
 ```bash
 ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=/ugv_1/cmd_vel
 ```
 
-Teleop behavior note:
-- `teleop_twist_keyboard` keeps publishing the last velocity command. After pressing `i`, press `k` to command zero velocity.
+`teleop_twist_keyboard` keeps publishing the last command; use `k` to command zero velocity.
 
-Troubleshooting note:
-- If the UGV drops, jumps, or becomes uncontrollable, verify the world includes a ground plane and wheel/base collision geometry starts non-penetrating.
+## Phase 2 Mission Communication
 
-Launch communication simulator (Phase 2 bootstrap):
+Mission topic flow:
+- UAV mission publisher -> `/uav_1/mission_raw`
+- Network simulator -> `/uav_1/mission_sim`
+- UGV mission receiver subscribes to `/uav_1/mission_sim`
+
+### Clean scenario (baseline relay)
 
 ```bash
-ros2 launch comm_layer network_simulation.launch.py \
-  input_topic:=/uav_1/info \
-  output_topic:=/uav_1/info_sim \
-  drop_probability:=0.2 \
-  delay_ms:=150 \
-  blackout_start_sec:=20.0 \
-  blackout_duration_sec:=10.0
+ros2 launch multi_robot_bringup simulation.launch.py \
+  use_rviz:=false \
+  use_mission_comms:=true \
+  use_network_sim:=true \
+  network_scenario:=clean
+```
+
+### Drop scenario
+
+```bash
+ros2 launch multi_robot_bringup simulation.launch.py \
+  use_rviz:=false \
+  use_mission_comms:=true \
+  use_network_sim:=true \
+  network_scenario:=drop
+```
+
+### Delay scenario
+
+```bash
+ros2 launch multi_robot_bringup simulation.launch.py \
+  use_rviz:=false \
+  use_mission_comms:=true \
+  use_network_sim:=true \
+  network_scenario:=delay
+```
+
+### Blackout scenario
+
+```bash
+ros2 launch multi_robot_bringup simulation.launch.py \
+  use_rviz:=false \
+  use_mission_comms:=true \
+  use_network_sim:=true \
+  network_scenario:=blackout
+```
+
+### Manual override example
+
+```bash
+ros2 launch multi_robot_bringup simulation.launch.py \
+  use_rviz:=false \
+  use_mission_comms:=true \
+  use_network_sim:=true \
+  network_scenario:=clean \
+  network_drop_probability:=0.4 \
+  network_delay_ms:=200
 ```
 
 ## Current Status
 
 - Phase 1: simulation bringup complete
-- Phase 2: `network_simulator_node` bootstrap added in `comm_layer`
+- Phase 2: realistic world + UAV->UGV mission communication + disruption scenarios implemented
+

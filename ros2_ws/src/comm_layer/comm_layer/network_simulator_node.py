@@ -11,27 +11,43 @@ class NetworkSimulatorNode(Node):
     def __init__(self) -> None:
         super().__init__('network_simulator_node')
 
-        self.declare_parameter('input_topic', '/uav_1/info')
-        self.declare_parameter('output_topic', '/uav_1/info_sim')
-        self.declare_parameter('drop_probability', 0.0)
-        self.declare_parameter('delay_ms', 0.0)
+        self.declare_parameter('input_topic', '/uav_1/mission_raw')
+        self.declare_parameter('output_topic', '/uav_1/mission_sim')
+        self.declare_parameter('scenario', 'clean')
+        self.declare_parameter('enabled', True)
+        self.declare_parameter('random_seed', 42)
+
+        # Negative values indicate "use scenario defaults".
+        self.declare_parameter('drop_probability', -1.0)
+        self.declare_parameter('delay_ms', -1.0)
         self.declare_parameter('blackout_start_sec', -1.0)
-        self.declare_parameter('blackout_duration_sec', 0.0)
+        self.declare_parameter('blackout_duration_sec', -1.0)
+
         self.declare_parameter('enable_stats_log', True)
         self.declare_parameter('stats_log_period_sec', 2.0)
 
         self._input_topic = self.get_parameter('input_topic').get_parameter_value().string_value
         self._output_topic = self.get_parameter('output_topic').get_parameter_value().string_value
+
+        self._scenario = self.get_parameter('scenario').get_parameter_value().string_value.strip().lower()
+        self._enabled = self.get_parameter('enabled').get_parameter_value().bool_value
+        self._random_seed = int(self.get_parameter('random_seed').value)
+
         self._drop_probability = self.get_parameter('drop_probability').get_parameter_value().double_value
         self._delay_ms = self.get_parameter('delay_ms').get_parameter_value().double_value
         self._blackout_start_sec = self.get_parameter('blackout_start_sec').get_parameter_value().double_value
         self._blackout_duration_sec = self.get_parameter('blackout_duration_sec').get_parameter_value().double_value
+
         self._enable_stats_log = self.get_parameter('enable_stats_log').get_parameter_value().bool_value
         self._stats_log_period_sec = self.get_parameter('stats_log_period_sec').get_parameter_value().double_value
+
+        self._apply_scenario_defaults()
 
         self._drop_probability = min(max(self._drop_probability, 0.0), 1.0)
         self._delay_ms = max(self._delay_ms, 0.0)
         self._blackout_duration_sec = max(self._blackout_duration_sec, 0.0)
+
+        self._rng = random.Random(self._random_seed)
 
         self._start_time_ns = self.get_clock().now().nanoseconds
 
@@ -51,11 +67,35 @@ class NetworkSimulatorNode(Node):
 
         self.get_logger().info(
             'network_simulator_node started: '
+            f'scenario={self._scenario}, enabled={self._enabled}, seed={self._random_seed}, '
             f'input={self._input_topic}, output={self._output_topic}, '
             f'drop_probability={self._drop_probability:.3f}, delay_ms={self._delay_ms:.1f}, '
             f'blackout_start_sec={self._blackout_start_sec:.2f}, '
             f'blackout_duration_sec={self._blackout_duration_sec:.2f}'
         )
+
+    def _apply_scenario_defaults(self) -> None:
+        presets = {
+            'clean': {'drop_probability': 0.0, 'delay_ms': 0.0, 'blackout_start_sec': -1.0, 'blackout_duration_sec': 0.0},
+            'drop': {'drop_probability': 0.35, 'delay_ms': 0.0, 'blackout_start_sec': -1.0, 'blackout_duration_sec': 0.0},
+            'delay': {'drop_probability': 0.0, 'delay_ms': 250.0, 'blackout_start_sec': -1.0, 'blackout_duration_sec': 0.0},
+            'blackout': {'drop_probability': 0.0, 'delay_ms': 0.0, 'blackout_start_sec': 8.0, 'blackout_duration_sec': 8.0},
+        }
+
+        if self._scenario not in presets:
+            self.get_logger().warn(f'Unknown scenario "{self._scenario}"; falling back to clean')
+            self._scenario = 'clean'
+
+        preset = presets[self._scenario]
+
+        if self._drop_probability < 0.0:
+            self._drop_probability = preset['drop_probability']
+        if self._delay_ms < 0.0:
+            self._delay_ms = preset['delay_ms']
+        if self._blackout_start_sec < 0.0:
+            self._blackout_start_sec = preset['blackout_start_sec']
+        if self._blackout_duration_sec < 0.0:
+            self._blackout_duration_sec = preset['blackout_duration_sec']
 
     def _elapsed_sec(self) -> float:
         now_ns = self.get_clock().now().nanoseconds
@@ -72,12 +112,16 @@ class NetworkSimulatorNode(Node):
     def _on_msg(self, msg: String) -> None:
         self._received_count += 1
 
+        if not self._enabled:
+            self._publish_msg(msg.data)
+            return
+
         if self._in_blackout():
             self._dropped_count += 1
             self._blackout_dropped_count += 1
             return
 
-        if random.random() < self._drop_probability:
+        if self._rng.random() < self._drop_probability:
             self._dropped_count += 1
             self._probability_dropped_count += 1
             return
