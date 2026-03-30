@@ -1,0 +1,17 @@
+# ROS 2 workspace artifacts
+ros2_ws/build/
+ros2_ws/install/
+ros2_ws/log/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# IDE
+.vscode/
+
+# Local/private project docs
+docs/
+
+# OS files
+.DS_Store
