@@ -14,10 +14,6 @@ def generate_launch_description():
     world_file = LaunchConfiguration('world_file')
     gz_args = LaunchConfiguration('gz_args')
 
-    uav_spawn_x = LaunchConfiguration('uav_spawn_x')
-    uav_spawn_y = LaunchConfiguration('uav_spawn_y')
-    uav_spawn_z = LaunchConfiguration('uav_spawn_z')
-
     ugv_spawn_x = LaunchConfiguration('ugv_spawn_x')
     ugv_spawn_y = LaunchConfiguration('ugv_spawn_y')
     ugv_spawn_z = LaunchConfiguration('ugv_spawn_z')
@@ -94,19 +90,6 @@ def generate_launch_description():
             'use_rviz': 'false',
             'use_sim_time': 'true',
         }.items(),
-    )
-
-    # Spawn UAV from its namespaced /robot_description
-    spawn_uav = ExecuteProcess(
-        cmd=[
-            'ros2', 'run', 'ros_gz_sim', 'create',
-            '-name', 'uav_1',
-            '-topic', '/uav_1/robot_description',
-            '-x', uav_spawn_x,
-            '-y', uav_spawn_y,
-            '-z', uav_spawn_z,
-        ],
-        output='screen',
     )
 
     # Spawn UGV from SDF (diff drive system)
@@ -195,11 +178,6 @@ def generate_launch_description():
         DeclareLaunchArgument('world_file', default_value=default_world_path),
         DeclareLaunchArgument('gz_args', default_value=['-r ', world_file]),
 
-        # Spawn defaults: separate UAV/UGV and keep UAV at realistic altitude.
-        DeclareLaunchArgument('uav_spawn_x', default_value='10.0'),
-        DeclareLaunchArgument('uav_spawn_y', default_value='0.0'),
-        DeclareLaunchArgument('uav_spawn_z', default_value='5.0'),
-
         DeclareLaunchArgument('ugv_spawn_x', default_value='-2.0'),
         DeclareLaunchArgument('ugv_spawn_y', default_value='0.0'),
         DeclareLaunchArgument('ugv_spawn_z', default_value='0.0'),
@@ -231,7 +209,6 @@ def generate_launch_description():
         start_uav,
         start_ugv,
 
-        TimerAction(period=2.0, actions=[spawn_uav]),
         TimerAction(period=2.5, actions=[spawn_ugv]),
 
         # Bridges can start before/after spawn; kept after for deterministic startup logs.
