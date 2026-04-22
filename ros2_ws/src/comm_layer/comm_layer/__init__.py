@@ -1,1 +1,1 @@
-"""Communication layer nodes for resilient UAV-UGV autonomy."""
+"""ROS topic-level communication disruption layer for MRTA stress-testing."""

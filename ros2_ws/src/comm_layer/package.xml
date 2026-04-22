@@ -3,7 +3,7 @@
 <package format="3">
   <name>comm_layer</name>
   <version>0.1.0</version>
-  <description>ROS topic-level communication disruption layer for resilient multi-robot simulation.</description>
+  <description>ROS topic-level communication disruption layer for MRTA stress-testing.</description>
   <maintainer email="privaeloking@gmail.com">tagnon</maintainer>
   <license>Apache-2.0</license>
 

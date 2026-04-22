@@ -15,7 +15,7 @@ setup(
     zip_safe=True,
     maintainer='tagnon',
     maintainer_email='privaeloking@gmail.com',
-    description='ROS topic-level communication disruption layer for resilient multi-robot simulation.',
+    description='ROS topic-level communication disruption layer for MRTA stress-testing.',
     license='Apache-2.0',
     tests_require=['pytest'],
     entry_points={

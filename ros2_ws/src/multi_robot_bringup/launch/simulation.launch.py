@@ -174,7 +174,6 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('use_rviz', default_value='false'),
 
-        # Realistic obstacle world for Phase 2.
         DeclareLaunchArgument('world_file', default_value=default_world_path),
         DeclareLaunchArgument('gz_args', default_value=['-r ', world_file]),
 
@@ -182,7 +181,6 @@ def generate_launch_description():
         DeclareLaunchArgument('ugv_spawn_y', default_value='0.0'),
         DeclareLaunchArgument('ugv_spawn_z', default_value='0.0'),
 
-        # Phase 2 mission comms toggles.
         DeclareLaunchArgument('use_mission_comms', default_value='false'),
         DeclareLaunchArgument('use_network_sim', default_value='false'),
 
@@ -215,7 +213,7 @@ def generate_launch_description():
         TimerAction(period=3.0, actions=[cmd_vel_bridge]),
         TimerAction(period=3.0, actions=[odom_bridge]),
 
-        # Mission communication stack (optional to preserve Phase 1 baseline defaults).
+        # Mission communication stack (opt-in; off by default).
         TimerAction(period=3.5, actions=[mission_publisher]),
         TimerAction(period=3.5, actions=[mission_receiver]),
         TimerAction(period=3.5, actions=[network_sim]),
