@@ -86,6 +86,3 @@ ros2 launch multi_robot_bringup simulation.launch.py \
 
 Available scenarios: `clean`, `drop`, `delay`, `blackout`. Mission schema and parameter overrides are in `ros2_ws/src/comm_layer/`.
 
-## Why this project
-
-MRTA is well-studied, but most implementations specialize in one approach. This repo is a learning vehicle and a comparison sandbox: implementing the major MRTA families in one sim — and eventually testing them under realistic comms disruption — makes the tradeoffs concrete rather than theoretical.
