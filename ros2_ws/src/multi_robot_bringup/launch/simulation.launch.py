@@ -1,3 +1,5 @@
+import os
+
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction, ExecuteProcess
 from launch.conditions import IfCondition
@@ -5,25 +7,34 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
-import os
+
+
+_UGV_CONFIGS = [
+    {'name': 'ugv_1', 'x': '-10.0', 'y':   '0.0', 'z': '0.0'},
+    {'name': 'ugv_2', 'x':  '10.0', 'y':   '0.0', 'z': '0.0'},
+    {'name': 'ugv_3', 'x':   '0.0', 'y':  '-7.0', 'z': '0.0'},
+]
+
+
+def _make_ugv_sdf(template_path, robot_name):
+    with open(template_path) as f:
+        content = f.read().replace('ugv_1', robot_name)
+    out_path = f'/tmp/{robot_name}.sdf'
+    with open(out_path, 'w') as f:
+        f.write(content)
+    return out_path
 
 
 def generate_launch_description():
     use_rviz = LaunchConfiguration('use_rviz')
-
     world_file = LaunchConfiguration('world_file')
     gz_args = LaunchConfiguration('gz_args')
-
-    ugv_spawn_x = LaunchConfiguration('ugv_spawn_x')
-    ugv_spawn_y = LaunchConfiguration('ugv_spawn_y')
-    ugv_spawn_z = LaunchConfiguration('ugv_spawn_z')
 
     use_mission_comms = LaunchConfiguration('use_mission_comms')
     use_network_sim = LaunchConfiguration('use_network_sim')
 
     mission_topic_raw = LaunchConfiguration('mission_topic_raw')
     mission_topic_sim = LaunchConfiguration('mission_topic_sim')
-
     mission_publish_rate_hz = LaunchConfiguration('mission_publish_rate_hz')
     mission_target_x = LaunchConfiguration('mission_target_x')
     mission_target_y = LaunchConfiguration('mission_target_y')
@@ -38,32 +49,27 @@ def generate_launch_description():
     network_blackout_start_sec = LaunchConfiguration('network_blackout_start_sec')
     network_blackout_duration_sec = LaunchConfiguration('network_blackout_duration_sec')
 
-    # Gazebo launcher
     ros_gz_sim_share = get_package_share_directory('ros_gz_sim')
     gz_launch = os.path.join(ros_gz_sim_share, 'launch', 'gz_sim.launch.py')
 
     bringup_share = get_package_share_directory('multi_robot_bringup')
     default_world_path = os.path.join(bringup_share, 'worlds', 'urban_obstacles.sdf')
 
-    # UAV / UGV launchers (robot_state_publisher + optional RViz)
     uav_share = get_package_share_directory('uav_description')
     uav_launch = os.path.join(uav_share, 'launch', 'uav.launch.py')
 
     ugv_share = get_package_share_directory('ugv_description')
     ugv_launch = os.path.join(ugv_share, 'launch', 'ugv.launch.py')
-    ugv_sdf = os.path.join(ugv_share, 'models', 'ugv_diffdrive.sdf')
+    ugv_sdf_template = os.path.join(ugv_share, 'models', 'ugv_diffdrive.sdf')
 
     comm_share = get_package_share_directory('comm_layer')
     network_launch = os.path.join(comm_share, 'launch', 'network_simulation.launch.py')
 
     start_gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(gz_launch),
-        launch_arguments={
-            'gz_args': gz_args,
-        }.items(),
+        launch_arguments={'gz_args': gz_args}.items(),
     )
 
-    # Bridge /clock
     clock_bridge = Node(
         package='ros_gz_bridge',
         executable='parameter_bridge',
@@ -72,7 +78,6 @@ def generate_launch_description():
         arguments=['/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock'],
     )
 
-    # UAV state publisher (namespaced); RViz optional (bringup arg)
     start_uav = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(uav_launch),
         launch_arguments={
@@ -82,48 +87,65 @@ def generate_launch_description():
         }.items(),
     )
 
-    # UGV state publisher (namespaced); do not launch a second RViz instance
-    start_ugv = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(ugv_launch),
-        launch_arguments={
-            'namespace': 'ugv_1',
-            'use_rviz': 'false',
-            'use_sim_time': 'true',
-        }.items(),
-    )
+    # Build per-UGV state publishers, spawns, and bridges
+    ugv_state_publishers = []
+    spawn_actions = []
+    bridge_actions = []
 
-    # Spawn UGV from SDF (diff drive system)
-    spawn_ugv = ExecuteProcess(
-        cmd=[
-            'ros2', 'run', 'ros_gz_sim', 'create',
-            '-name', 'ugv_1',
-            '-file', ugv_sdf,
-            '-x', ugv_spawn_x,
-            '-y', ugv_spawn_y,
-            '-z', ugv_spawn_z,
-        ],
-        output='screen',
-    )
+    for cfg in _UGV_CONFIGS:
+        robot_name = cfg['name']
+        sdf_path = _make_ugv_sdf(ugv_sdf_template, robot_name)
 
-    # Bridge cmd_vel ROS->GZ (ROS: /ugv_1/cmd_vel  <->  GZ: /model/ugv_1/cmd_vel)
-    cmd_vel_bridge = Node(
-        package='ros_gz_bridge',
-        executable='parameter_bridge',
-        name='ugv_cmd_vel_bridge',
-        output='screen',
-        arguments=['/model/ugv_1/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist'],
-        remappings=[('/model/ugv_1/cmd_vel', '/ugv_1/cmd_vel')],
-    )
+        ugv_state_publishers.append(
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(ugv_launch),
+                launch_arguments={
+                    'namespace': robot_name,
+                    'use_rviz': 'false',
+                    'use_sim_time': 'true',
+                }.items(),
+            )
+        )
 
-    # Bridge odometry GZ->ROS (GZ: /model/ugv_1/odometry -> ROS: /ugv_1/odom)
-    odom_bridge = Node(
-        package='ros_gz_bridge',
-        executable='parameter_bridge',
-        name='ugv_odom_bridge',
-        output='screen',
-        arguments=['/model/ugv_1/odometry@nav_msgs/msg/Odometry[gz.msgs.Odometry'],
-        remappings=[('/model/ugv_1/odometry', '/ugv_1/odom')],
-    )
+        spawn_actions.append(
+            ExecuteProcess(
+                cmd=[
+                    'ros2', 'run', 'ros_gz_sim', 'create',
+                    '-name', robot_name,
+                    '-file', sdf_path,
+                    '-x', cfg['x'],
+                    '-y', cfg['y'],
+                    '-z', cfg['z'],
+                ],
+                output='screen',
+            )
+        )
+
+        bridge_actions.append(
+            Node(
+                package='ros_gz_bridge',
+                executable='parameter_bridge',
+                name=f'{robot_name}_cmd_vel_bridge',
+                output='screen',
+                arguments=[
+                    f'/model/{robot_name}/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist'
+                ],
+                remappings=[(f'/model/{robot_name}/cmd_vel', f'/{robot_name}/cmd_vel')],
+            )
+        )
+
+        bridge_actions.append(
+            Node(
+                package='ros_gz_bridge',
+                executable='parameter_bridge',
+                name=f'{robot_name}_odom_bridge',
+                output='screen',
+                arguments=[
+                    f'/model/{robot_name}/odometry@nav_msgs/msg/Odometry[gz.msgs.Odometry'
+                ],
+                remappings=[(f'/model/{robot_name}/odometry', f'/{robot_name}/odom')],
+            )
+        )
 
     mission_publisher = Node(
         package='comm_layer',
@@ -177,10 +199,6 @@ def generate_launch_description():
         DeclareLaunchArgument('world_file', default_value=default_world_path),
         DeclareLaunchArgument('gz_args', default_value=['-r ', world_file]),
 
-        DeclareLaunchArgument('ugv_spawn_x', default_value='-2.0'),
-        DeclareLaunchArgument('ugv_spawn_y', default_value='0.0'),
-        DeclareLaunchArgument('ugv_spawn_z', default_value='0.0'),
-
         DeclareLaunchArgument('use_mission_comms', default_value='false'),
         DeclareLaunchArgument('use_network_sim', default_value='false'),
 
@@ -205,13 +223,10 @@ def generate_launch_description():
         clock_bridge,
 
         start_uav,
-        start_ugv,
+        *ugv_state_publishers,
 
-        TimerAction(period=2.5, actions=[spawn_ugv]),
-
-        # Bridges can start before/after spawn; kept after for deterministic startup logs.
-        TimerAction(period=3.0, actions=[cmd_vel_bridge]),
-        TimerAction(period=3.0, actions=[odom_bridge]),
+        TimerAction(period=2.5, actions=spawn_actions),
+        TimerAction(period=3.0, actions=bridge_actions),
 
         # Mission communication stack (opt-in; off by default).
         TimerAction(period=3.5, actions=[mission_publisher]),

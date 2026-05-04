@@ -2,7 +2,10 @@
 
 Heterogeneous multi-robot task allocation (MRTA) in a ROS 2 + Gazebo sandbox: one UAV providing aerial observation, multiple UGVs executing ground tasks, with comms disruption as an eventual stress-test layer on top of any allocation scheme.
 
-<!-- TODO: add demo GIF once M2 is working -->
+## Demo
+
+<!-- Hero GIF: replace with latest milestone. First capture planned at end of M1. -->
+<!-- ![hero demo](<url-or-path>) -->
 
 ## What this is
 
@@ -35,6 +38,20 @@ Built milestone by milestone. Each milestone closes with checkpoint questions th
 - [ ] **M5** — Comparison study: solution quality, compute time, scaling
 - [ ] **M6** — Allocation under comms disruption (integrate existing `comm_layer`)
 - [ ] **M7** — Learning-based allocation (stretch)
+
+## Milestones gallery
+
+Short clips captured at each milestone checkpoint. Populated as milestones land.
+
+| Milestone | Demo |
+|---|---|
+| M0 — Foundation (UAV + 1 UGV, teleop) | _not captured_ |
+| M1 — 3 UGVs namespaced | _pending_ |
+| M2 — UAV target detection | _pending_ |
+| M3 — Hungarian allocation | _pending_ |
+| M4 — Auction allocation | _pending_ |
+| M5 — Comparison study | _pending_ |
+| M6 — Allocation under comms disruption | _pending_ |
 
 ## Stack
 
