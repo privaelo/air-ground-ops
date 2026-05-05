@@ -30,6 +30,7 @@ def generate_launch_description():
     world_file = LaunchConfiguration('world_file')
     gz_args = LaunchConfiguration('gz_args')
 
+    use_uav_observer = LaunchConfiguration('use_uav_observer')
     use_mission_comms = LaunchConfiguration('use_mission_comms')
     use_network_sim = LaunchConfiguration('use_network_sim')
 
@@ -61,6 +62,23 @@ def generate_launch_description():
     ugv_share = get_package_share_directory('ugv_description')
     ugv_launch = os.path.join(ugv_share, 'launch', 'ugv.launch.py')
     ugv_sdf_template = os.path.join(ugv_share, 'models', 'ugv_diffdrive.sdf')
+
+    observer_node = Node(
+        package='uav_observer',
+        executable='target_observer_node',
+        name='target_observer_node',
+        namespace='uav_1',
+        output='screen',
+        parameters=[{
+            'uav_x': -2.0,
+            'uav_y': 0.0,
+            'detection_radius': 50.0,
+            'target_ids': ['t1', 't2', 't3'],
+            'target_xs': [8.0, -8.0, 8.0],
+            'target_ys': [7.0, -7.0, -7.0],
+        }],
+        condition=IfCondition(use_uav_observer),
+    )
 
     comm_share = get_package_share_directory('comm_layer')
     network_launch = os.path.join(comm_share, 'launch', 'network_simulation.launch.py')
@@ -199,6 +217,7 @@ def generate_launch_description():
         DeclareLaunchArgument('world_file', default_value=default_world_path),
         DeclareLaunchArgument('gz_args', default_value=['-r ', world_file]),
 
+        DeclareLaunchArgument('use_uav_observer', default_value='false'),
         DeclareLaunchArgument('use_mission_comms', default_value='false'),
         DeclareLaunchArgument('use_network_sim', default_value='false'),
 
@@ -228,7 +247,8 @@ def generate_launch_description():
         TimerAction(period=2.5, actions=spawn_actions),
         TimerAction(period=3.0, actions=bridge_actions),
 
-        # Mission communication stack (opt-in; off by default).
+        # UAV observer + mission comms (opt-in; off by default).
+        TimerAction(period=3.5, actions=[observer_node]),
         TimerAction(period=3.5, actions=[mission_publisher]),
         TimerAction(period=3.5, actions=[mission_receiver]),
         TimerAction(period=3.5, actions=[network_sim]),
