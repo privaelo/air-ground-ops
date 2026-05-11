@@ -56,6 +56,7 @@ def generate_launch_description():
 
     bringup_share = get_package_share_directory('multi_robot_bringup')
     default_world_path = os.path.join(bringup_share, 'worlds', 'urban_obstacles.sdf')
+    rviz_config = os.path.join(bringup_share, 'rviz', 'mrta_demo.rviz')
 
     uav_share = get_package_share_directory('uav_description')
     uav_launch = os.path.join(uav_share, 'launch', 'uav.launch.py')
@@ -89,6 +90,34 @@ def generate_launch_description():
         condition=IfCondition(use_allocator),
     )
 
+    goal_follower_nodes = [
+        Node(
+            package='ugv_nav',
+            executable='ugv_goal_follower_node',
+            name=f'{cfg["name"]}_goal_follower',
+            output='screen',
+            parameters=[{'ugv_name': cfg['name']}],
+            condition=IfCondition(use_allocator),
+        )
+        for cfg in _UGV_CONFIGS
+    ]
+
+    marker_node = Node(
+        package='ugv_nav',
+        executable='assignment_marker_node',
+        name='assignment_marker_node',
+        output='screen',
+        condition=IfCondition(use_allocator),
+    )
+
+    # Publishes a static world→map identity so RViz can use 'world' as fixed frame.
+    world_frame_publisher = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        name='world_frame_publisher',
+        arguments=['0', '0', '0', '0', '0', '0', 'world', 'map'],
+    )
+
     comm_share = get_package_share_directory('comm_layer')
     network_launch = os.path.join(comm_share, 'launch', 'network_simulation.launch.py')
 
@@ -109,9 +138,19 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(uav_launch),
         launch_arguments={
             'namespace': 'uav_1',
-            'use_rviz': use_rviz,
+            'use_rviz': 'false',   # RViz is owned by simulation.launch.py
             'use_sim_time': 'true',
         }.items(),
+    )
+
+    rviz_node = Node(
+        package='rviz2',
+        executable='rviz2',
+        name='rviz2',
+        output='screen',
+        arguments=['-d', rviz_config],
+        parameters=[{'use_sim_time': True}],
+        condition=IfCondition(use_rviz),
     )
 
     # Build per-UGV state publishers, spawns, and bridges
@@ -248,6 +287,8 @@ def generate_launch_description():
         DeclareLaunchArgument('network_blackout_start_sec', default_value='-1.0'),
         DeclareLaunchArgument('network_blackout_duration_sec', default_value='-1.0'),
 
+        world_frame_publisher,
+        rviz_node,
         start_gazebo,
         clock_bridge,
 
@@ -257,9 +298,11 @@ def generate_launch_description():
         TimerAction(period=2.5, actions=spawn_actions),
         TimerAction(period=3.0, actions=bridge_actions),
 
-        # UAV observer, allocator, mission comms (opt-in; off by default).
+        # UAV observer, allocator, goal followers, mission comms (opt-in; off by default).
         TimerAction(period=3.5, actions=[observer_node]),
         TimerAction(period=3.5, actions=[allocator_node]),
+        TimerAction(period=4.0, actions=goal_follower_nodes),
+        TimerAction(period=4.0, actions=[marker_node]),
         TimerAction(period=3.5, actions=[mission_publisher]),
         TimerAction(period=3.5, actions=[mission_receiver]),
         TimerAction(period=3.5, actions=[network_sim]),

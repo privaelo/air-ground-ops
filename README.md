@@ -1,75 +1,45 @@
 # air-ground-ops
 
-Heterogeneous multi-robot task allocation (MRTA) in a ROS 2 + Gazebo sandbox: one UAV providing aerial observation, multiple UGVs executing ground tasks, with comms disruption as an eventual stress-test layer on top of any allocation scheme.
+A ROS 2 + Gazebo sandbox for studying and comparing Multi-Robot Task Allocation (MRTA) strategies with heterogeneous agents.
 
-## Demo
+## What it is
 
-<!-- Hero GIF: replace with latest milestone. First capture planned at end of M1. -->
-<!-- ![hero demo](<url-or-path>) -->
-
-## What this is
-
-A simulation environment for studying MRTA with heterogeneous agents. The goal is to implement and compare MRTA strategies — market-based auctions, optimization methods, and learning-based approaches — in a consistent setting, then stress-test them under comms disruption.
+One UAV acts as an aerial observer — it detects targets in the environment and broadcasts their positions. Three ground robots (UGVs) receive assignments and navigate to their targets. The repo is built to compare MRTA strategies (centralized optimization, decentralized auction) in a consistent simulation environment, then stress-test them under comms disruption.
 
 ## Scope
 
-- **1 UAV** — aerial observer (static pose; flight dynamics out of scope initially)
-- **3 UGVs** — ground executors (diff-drive model)
-- **Urban obstacle world** — static barriers and blocks
-- **Targets** — distributed in the environment, discovered by the UAV (M2)
-- **Allocation strategies** — multiple MRTA families to be compared (M3–M5)
-- **Comms disruption** — applied as a stress-test layer on top of allocation (M6)
+- **1 UAV** — static aerial observer; flight dynamics out of scope
+- **3 UGVs** — diff-drive ground executors
+- **Urban obstacle world** — static barriers, Gazebo Harmonic
+- **Allocation strategies** — Hungarian (M3), auction/CBBA (M4), comparison study (M5)
+- **Comms disruption** — stress-test layer on top of allocation (M6); pre-existing `comm_layer` package will be re-integrated
 
-## Status
+## Current status
 
-Sim bringup complete: ROS 2 / Gazebo workspace with UAV + 1 UGV spawning in the obstacle world, UGV teleop via `cmd_vel`. Scaling to 3 UGVs (M1) is the immediate next step.
+M3 complete: Hungarian allocation end-to-end. UAV detects targets, allocator solves the assignment problem, UGVs navigate to assigned targets. RViz shows colored path lines per robot. Terminal display prints initial state, cost matrix, assignment result, and arrival confirmations.
 
-A ROS-level communication disruption layer (mission publisher, network simulator, receiver with JSON schema validation; scenarios: clean / drop / delay / blackout) exists in the repo from an earlier iteration of this project and will be re-integrated at M6 as the MRTA stress-test harness.
+## Demo
 
-## Roadmap
-
-Built milestone by milestone. Each milestone closes with checkpoint questions that make the design tradeoffs explicit — useful as a self-check when learning MRTA alongside the code.
-
-- [x] **M0** — Foundation: ROS 2 / Gazebo workspace, UAV + UGV bringup, UGV teleop
-- [ ] **M1** — Scale to 3 UGVs with namespaced bringup
-- [ ] **M2** — Target placement + UAV target detection and broadcast
-- [ ] **M3** — Centralized optimization-based allocation (Hungarian)
-- [ ] **M4** — Decentralized market-based allocation (auction)
-- [ ] **M5** — Comparison study: solution quality, compute time, scaling
-- [ ] **M6** — Allocation under comms disruption (integrate existing `comm_layer`)
-- [ ] **M7** — Learning-based allocation (stretch)
-
-## Milestones gallery
-
-Short clips captured at each milestone checkpoint. Populated as milestones land.
-
-| Milestone | Demo |
-|---|---|
-| M0 — Foundation (UAV + 1 UGV, teleop) | _not captured_ |
-| M1 — 3 UGVs namespaced | _pending_ |
-| M2 — UAV target detection | _pending_ |
-| M3 — Hungarian allocation | _pending_ |
-| M4 — Auction allocation | _pending_ |
-| M5 — Comparison study | _pending_ |
-| M6 — Allocation under comms disruption | _pending_ |
+<!-- M3 demo video — replace with embed or GIF -->
 
 ## Stack
 
-- ROS 2 Jazzy
-- Gazebo Harmonic
-- Ubuntu 24.04
-- Python (ROS nodes), URDF/Xacro + SDF (robot and world description)
+- ROS 2 Jazzy · Gazebo Harmonic · Ubuntu 24.04
+- Python (ROS nodes) · URDF/Xacro + SDF (robot and world descriptions)
 
 ## Packages
 
-- `multi_robot_bringup` — top-level launch, worlds
-- `uav_description` — UAV URDF/Xacro + `robot_state_publisher` launch
-- `ugv_description` — UGV URDF (for RViz) + SDF with diff-drive plugin (for Gazebo)
-- `comm_layer` — pre-existing mission publisher, network simulator, mission receiver (to be re-integrated at M6)
+| Package | Role |
+|---|---|
+| `multi_robot_bringup` | Top-level launch, world SDF, RViz config |
+| `uav_description` | UAV URDF/Xacro + `robot_state_publisher` launch |
+| `ugv_description` | UGV URDF (RViz) + SDF with VelocityControl + OdometryPublisher plugins |
+| `uav_observer` | Target detection node — broadcasts discovered targets on `/uav_1/targets` |
+| `task_allocator` | Hungarian allocator — solves assignment, publishes to `/allocation/assignments` |
+| `ugv_nav` | Goal follower, RViz marker node, demo display node |
+| `comm_layer` | Pre-existing comms disruption layer (clean / drop / delay / blackout) — re-integrated at M6 |
 
 ## Running it
-
-Build and source the workspace:
 
 ```bash
 cd ros2_ws
@@ -77,21 +47,26 @@ colcon build --symlink-install
 source install/setup.bash
 ```
 
-### Baseline sim
+### Baseline sim (Gazebo only)
 
 ```bash
 ros2 launch multi_robot_bringup simulation.launch.py use_rviz:=false
 ```
 
-### UGV teleop
+### M3 — Hungarian allocation demo
+
+Two terminals:
 
 ```bash
-ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=/ugv_1/cmd_vel
+# Terminal 1
+ros2 launch multi_robot_bringup simulation.launch.py \
+  use_rviz:=true use_uav_observer:=true use_allocator:=true
+
+# Terminal 2
+ros2 run ugv_nav demo_display_node
 ```
 
-### Pre-existing comms disruption layer
-
-Not part of the active MRTA flow yet, but functional and runnable:
+### Comms disruption layer (pre-existing, not part of active MRTA flow)
 
 ```bash
 ros2 launch multi_robot_bringup simulation.launch.py \
@@ -101,5 +76,4 @@ ros2 launch multi_robot_bringup simulation.launch.py \
   network_scenario:=drop
 ```
 
-Available scenarios: `clean`, `drop`, `delay`, `blackout`. Mission schema and parameter overrides are in `ros2_ws/src/comm_layer/`.
-
+Scenarios: `clean`, `drop`, `delay`, `blackout`. Schema and parameters in `ros2_ws/src/comm_layer/`.

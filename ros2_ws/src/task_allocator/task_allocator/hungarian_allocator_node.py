@@ -18,7 +18,7 @@ class HungarianAllocatorNode(Node):
         self.declare_parameter('publish_rate_hz', 1.0)
 
         self._ugv_names = self.get_parameter('ugv_names').value
-        # Latest (x, y) per UGV; None until first odom arrives
+        # OdometryPublisher gives world-frame positions directly.
         self._positions = {name: None for name in self._ugv_names}
         self._targets = []
 
