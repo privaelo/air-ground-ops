@@ -31,6 +31,7 @@ def generate_launch_description():
     gz_args = LaunchConfiguration('gz_args')
 
     use_uav_observer = LaunchConfiguration('use_uav_observer')
+    use_allocator = LaunchConfiguration('use_allocator')
     use_mission_comms = LaunchConfiguration('use_mission_comms')
     use_network_sim = LaunchConfiguration('use_network_sim')
 
@@ -78,6 +79,14 @@ def generate_launch_description():
             'target_ys': [7.0, -7.0, -7.0],
         }],
         condition=IfCondition(use_uav_observer),
+    )
+
+    allocator_node = Node(
+        package='task_allocator',
+        executable='hungarian_allocator_node',
+        name='hungarian_allocator_node',
+        output='screen',
+        condition=IfCondition(use_allocator),
     )
 
     comm_share = get_package_share_directory('comm_layer')
@@ -218,6 +227,7 @@ def generate_launch_description():
         DeclareLaunchArgument('gz_args', default_value=['-r ', world_file]),
 
         DeclareLaunchArgument('use_uav_observer', default_value='false'),
+        DeclareLaunchArgument('use_allocator', default_value='false'),
         DeclareLaunchArgument('use_mission_comms', default_value='false'),
         DeclareLaunchArgument('use_network_sim', default_value='false'),
 
@@ -247,8 +257,9 @@ def generate_launch_description():
         TimerAction(period=2.5, actions=spawn_actions),
         TimerAction(period=3.0, actions=bridge_actions),
 
-        # UAV observer + mission comms (opt-in; off by default).
+        # UAV observer, allocator, mission comms (opt-in; off by default).
         TimerAction(period=3.5, actions=[observer_node]),
+        TimerAction(period=3.5, actions=[allocator_node]),
         TimerAction(period=3.5, actions=[mission_publisher]),
         TimerAction(period=3.5, actions=[mission_receiver]),
         TimerAction(period=3.5, actions=[network_sim]),
