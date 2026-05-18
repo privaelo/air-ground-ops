@@ -12,7 +12,6 @@ One UAV acts as an aerial observer — it detects targets in the environment and
 - **3 UGVs** — diff-drive ground executors
 - **Urban obstacle world** — static barriers, Gazebo Harmonic
 - **Allocation strategies** — centralized optimization (Hungarian), decentralized auction (CBBA), comparison study
-- **Comms disruption** — stress-test layer on top of allocation; pre-existing `comm_layer` package will be re-integrated
 
 ## Current status
 
@@ -37,7 +36,7 @@ Hungarian allocation end-to-end: UAV detects targets, allocator solves the assig
 | `uav_observer` | Target detection node — broadcasts discovered targets on `/uav_1/targets` |
 | `task_allocator` | Hungarian allocator — solves assignment, publishes to `/allocation/assignments` |
 | `ugv_nav` | Goal follower, RViz marker node, demo display node |
-| `comm_layer` | Pre-existing comms disruption layer (clean / drop / delay / blackout) — to be re-integrated as stress-test harness |
+| `comm_layer` | Comms disruption layer (clean / drop / delay / blackout) — not active yet |
 
 ## Running it
 
@@ -66,14 +65,3 @@ ros2 launch multi_robot_bringup simulation.launch.py \
 ros2 run ugv_nav demo_display_node
 ```
 
-### Comms disruption layer (pre-existing, not part of active allocation flow)
-
-```bash
-ros2 launch multi_robot_bringup simulation.launch.py \
-  use_rviz:=false \
-  use_mission_comms:=true \
-  use_network_sim:=true \
-  network_scenario:=drop
-```
-
-Scenarios: `clean`, `drop`, `delay`, `blackout`. Schema and parameters in `ros2_ws/src/comm_layer/`.
