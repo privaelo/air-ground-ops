@@ -49,9 +49,9 @@ class DemoDisplayNode(Node):
         self.create_timer(0.3, self._check_arrivals)
 
         print(f'\n{_DSEP}')
-        print(f'  MRTA DEMO  ·  Hungarian Allocation')
+        print('  MRTA DEMO  ·  Hungarian Allocation')
         print(f'{_DSEP}')
-        print(f'  Waiting for robots and targets...')
+        print('  Waiting for robots and targets...')
 
     # ── subscriptions ─────────────────────────────────────────────────────────
 
@@ -98,20 +98,20 @@ class DemoDisplayNode(Node):
 
     def _print_initial_state(self, initial_poses: dict):
         print(f'\n{_DSEP}')
-        print(f'  INITIAL STATE')
+        print('  INITIAL STATE')
         print(f'{_SEP}')
 
-        print(f'\n  Robots')
+        print('\n  Robots')
         for name in sorted(initial_poses):
             x, y, z = initial_poses[name]
             print(f'  {name}   ({x:+7.2f}, {y:+7.2f}, {z:+.2f})')
 
-        print(f'\n  Targets')
+        print('\n  Targets')
         for t in self._targets:
             print(f'  {t["id"]}     ({t["x"]:+7.2f}, {t["y"]:+7.2f})')
 
         print(f'\n{_SEP}')
-        print(f'  Cost matrix  (Euclidean distance, m)')
+        print('  Cost matrix  (Euclidean distance, m)')
         print(f'{_SEP}')
         tids = [t['id'] for t in self._targets]
         print('           ' + ''.join(f'{tid:>8}' for tid in tids))
@@ -120,12 +120,12 @@ class DemoDisplayNode(Node):
             row = ''.join(f'{_dist(ux, uy, t["x"], t["y"]):8.2f}' for t in self._targets)
             print(f'  {name}   {row}')
 
-        print(f'\n  Running Hungarian algorithm...')
+        print('\n  Running Hungarian algorithm...')
 
     def _print_assignment(self):
         total = sum(a['cost'] for a in self._assignments.values())
         print(f'{_DSEP}')
-        print(f'  ASSIGNMENT RESULT')
+        print('  ASSIGNMENT RESULT')
         print(f'{_SEP}')
         for name in sorted(self._assignments):
             a = self._assignments[name]
@@ -137,7 +137,7 @@ class DemoDisplayNode(Node):
         print(f'{_SEP}')
         print(f'  Total cost : {total:.2f} m')
         print(f'{_DSEP}')
-        print(f'\n  UGVs en route...\n')
+        print('\n  UGVs en route...\n')
 
     # ── arrival monitor ───────────────────────────────────────────────────────
 
