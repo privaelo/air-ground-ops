@@ -101,21 +101,20 @@ This repo was originally focused on resilient UAV-UGV autonomy under comms disru
 
 ## Current status
 
-- UAV (static pose in `urban_obstacles.sdf`) and **one** UGV (diff-drive, diff-drive plugin in SDF) spawn and run in Gazebo Harmonic.
-- UGV teleop works via `ros_gz_bridge` mapping `/ugv_1/cmd_vel` to `/model/ugv_1/cmd_vel`.
-- Odometry is bridged from Gazebo to ROS at `/ugv_1/odom`.
-- `comm_layer` runs end-to-end with all four scenarios but is not part of the MRTA workflow yet.
+Hungarian allocation end-to-end: UAV detects targets, allocator solves the assignment problem (scipy Hungarian), UGVs navigate to assigned targets via a turn-then-drive proportional controller. RViz shows colored path lines per robot. Terminal display prints initial state, cost matrix, assignment result, and arrival confirmations with coordinates.
 
-Immediate next milestone: **M1 — scale to 3 UGVs with namespaced bringup.**
+UGV SDF uses `gz-sim-velocity-control-system` + `gz-sim-odometry-publisher-system` (world-frame absolute positions). Three UGVs spawn at (-10,0), (10,0), (0,-7). Targets at (8,7), (-8,-7), (8,-7).
+
+Next: decentralized market-based allocation (auction / CBBA).
 
 ---
 
 ## Roadmap
 
 - [x] M0 — Foundation: sim bringup, UAV + UGV, teleop
-- [ ] M1 — Scale to 3 UGVs (`ugv_1`, `ugv_2`, `ugv_3`) with namespaced topics
-- [ ] M2 — Target placement in world + UAV target detection and broadcast
-- [ ] M3 — Centralized optimization-based allocation (Hungarian)
+- [x] M1 — Scale to 3 UGVs (`ugv_1`, `ugv_2`, `ugv_3`) with namespaced topics
+- [x] M2 — Target placement in world + UAV target detection and broadcast
+- [x] M3 — Centralized optimization-based allocation (Hungarian)
 - [ ] M4 — Decentralized market-based allocation (auction)
 - [ ] M5 — Comparison study (solution quality, compute time, scaling)
 - [ ] M6 — Allocation under comms disruption (integrate existing `comm_layer`)

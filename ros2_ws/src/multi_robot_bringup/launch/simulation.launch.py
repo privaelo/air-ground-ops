@@ -1,12 +1,41 @@
 import os
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction, ExecuteProcess
+from launch.actions import (
+    DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction,
+    SetLaunchConfiguration, TimerAction, ExecuteProcess,
+)
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
+
+
+def _apply_pause_flag(context, *args, **kwargs):
+    world = context.launch_configurations['world_file']
+    paused = context.launch_configurations.get('paused', 'false') == 'true'
+    actions = [SetLaunchConfiguration('gz_args', f'-r {world}')]
+    if paused:
+        # gz-sim 8 has no --pause flag; start with -r so the world fully loads,
+        # then freeze via gz service once the transport bus is up (~2 s).
+        actions.append(
+            TimerAction(
+                period=2.0,
+                actions=[ExecuteProcess(
+                    cmd=[
+                        'gz', 'service',
+                        '-s', '/world/urban_obstacles_world/control',
+                        '--reqtype', 'gz.msgs.WorldControl',
+                        '--reptype', 'gz.msgs.Boolean',
+                        '--timeout', '5000',
+                        '--req', 'pause: true',
+                    ],
+                    output='screen',
+                )],
+            )
+        )
+    return actions
 
 
 _UGV_CONFIGS = [
@@ -262,8 +291,10 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('use_rviz', default_value='false'),
 
+        DeclareLaunchArgument('paused', default_value='false'),
         DeclareLaunchArgument('world_file', default_value=default_world_path),
-        DeclareLaunchArgument('gz_args', default_value=['-r ', world_file]),
+        DeclareLaunchArgument('gz_args', default_value=''),
+        OpaqueFunction(function=_apply_pause_flag),
 
         DeclareLaunchArgument('use_uav_observer', default_value='false'),
         DeclareLaunchArgument('use_allocator', default_value='false'),

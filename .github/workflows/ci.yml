@@ -1,0 +1,46 @@
+---
+name: CI
+
+"on":
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    name: Build & Test (ROS 2 Jazzy)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.ccache
+          key: ccache-jazzy-${{ github.sha }}
+          restore-keys: |
+            ccache-jazzy-
+
+      - name: Build and test
+        uses: ros-industrial/industrial_ci@master
+        env:
+          ROS_DISTRO: jazzy
+          ROS_REPO: main
+          ADDITIONAL_DEBS: >-
+            ros-jazzy-launch-testing
+            ros-jazzy-launch-testing-ros
+            ros-jazzy-launch-pytest
+          CCACHE_DIR: ${{ github.workspace }}/.ccache
+          AFTER_SCRIPT: >-
+            cp -rp /root/ros_ws/log
+            "$GITHUB_WORKSPACE/colcon_log" || true
+
+      - name: Upload test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: colcon-logs
+          path: colcon_log/
+          if-no-files-found: ignore

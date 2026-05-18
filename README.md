@@ -11,12 +11,12 @@ One UAV acts as an aerial observer — it detects targets in the environment and
 - **1 UAV** — static aerial observer; flight dynamics out of scope
 - **3 UGVs** — diff-drive ground executors
 - **Urban obstacle world** — static barriers, Gazebo Harmonic
-- **Allocation strategies** — Hungarian (M3), auction/CBBA (M4), comparison study (M5)
-- **Comms disruption** — stress-test layer on top of allocation (M6); pre-existing `comm_layer` package will be re-integrated
+- **Allocation strategies** — centralized optimization (Hungarian), decentralized auction (CBBA), comparison study
+- **Comms disruption** — stress-test layer on top of allocation; pre-existing `comm_layer` package will be re-integrated
 
 ## Current status
 
-M3 complete: Hungarian allocation end-to-end. UAV detects targets, allocator solves the assignment problem, UGVs navigate to assigned targets. RViz shows colored path lines per robot. Terminal display prints initial state, cost matrix, assignment result, and arrival confirmations.
+Hungarian allocation end-to-end: UAV detects targets, allocator solves the assignment problem, UGVs navigate to their assigned targets. RViz shows colored path lines per robot. Terminal display prints initial state, cost matrix, assignment result, and arrival confirmations.
 
 ## Demo
 
@@ -37,7 +37,7 @@ M3 complete: Hungarian allocation end-to-end. UAV detects targets, allocator sol
 | `uav_observer` | Target detection node — broadcasts discovered targets on `/uav_1/targets` |
 | `task_allocator` | Hungarian allocator — solves assignment, publishes to `/allocation/assignments` |
 | `ugv_nav` | Goal follower, RViz marker node, demo display node |
-| `comm_layer` | Pre-existing comms disruption layer (clean / drop / delay / blackout) — re-integrated at M6 |
+| `comm_layer` | Pre-existing comms disruption layer (clean / drop / delay / blackout) — to be re-integrated as stress-test harness |
 
 ## Running it
 
@@ -53,7 +53,7 @@ source install/setup.bash
 ros2 launch multi_robot_bringup simulation.launch.py use_rviz:=false
 ```
 
-### M3 — Hungarian allocation demo
+### Hungarian allocation demo
 
 Two terminals:
 
@@ -66,7 +66,7 @@ ros2 launch multi_robot_bringup simulation.launch.py \
 ros2 run ugv_nav demo_display_node
 ```
 
-### Comms disruption layer (pre-existing, not part of active MRTA flow)
+### Comms disruption layer (pre-existing, not part of active allocation flow)
 
 ```bash
 ros2 launch multi_robot_bringup simulation.launch.py \
