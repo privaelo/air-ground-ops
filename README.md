@@ -2,6 +2,8 @@
 
 A ROS 2 + Gazebo sandbox for studying and comparing Multi-Robot Task Allocation (MRTA) strategies with heterogeneous agents.
 
+<img width="800" height="450" alt="MRTA_Hungarian1-ezgif com-video-to-gif-converter" src="https://github.com/user-attachments/assets/4bfb70d4-baef-46f8-9a5a-67278a692008" />
+
 ## What it is
 
 One UAV acts as an aerial observer — it detects targets in the environment and broadcasts their positions. Three ground robots (UGVs) receive assignments and navigate to their targets. The repo is built to compare MRTA strategies (centralized optimization, decentralized auction) in a consistent simulation environment, then stress-test them under comms disruption.
@@ -17,10 +19,8 @@ One UAV acts as an aerial observer — it detects targets in the environment and
 
 Hungarian allocation end-to-end: UAV detects targets, allocator solves the assignment problem, UGVs navigate to their assigned targets. RViz shows colored path lines per robot. Terminal display prints initial state, cost matrix, assignment result, and arrival confirmations.
 
-## Demo: Hungarian algorithm
-<img width="800" height="450" alt="MRTA_Hungarian1-ezgif com-video-to-gif-converter" src="https://github.com/user-attachments/assets/4bfb70d4-baef-46f8-9a5a-67278a692008" />
-
-<!--https://github.com/user-attachments/assets/e8433b71-6ec4-4faa-a1e9-a579bd446a06-->
+<!--## Demo: Hungarian algorithm
+https://github.com/user-attachments/assets/e8433b71-6ec4-4faa-a1e9-a579bd446a06-->
 
 
 ## Stack
