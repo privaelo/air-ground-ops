@@ -18,8 +18,8 @@ One UAV acts as an aerial observer — it detects targets in the environment and
 Hungarian allocation end-to-end: UAV detects targets, allocator solves the assignment problem, UGVs navigate to their assigned targets. RViz shows colored path lines per robot. Terminal display prints initial state, cost matrix, assignment result, and arrival confirmations.
 
 ## Demo
+https://github.com/user-attachments/assets/e8433b71-6ec4-4faa-a1e9-a579bd446a06
 
-<!-- M3 demo video — replace with embed or GIF -->
 
 ## Stack
 
