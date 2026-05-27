@@ -60,6 +60,7 @@ Two terminals:
 
 ```bash
 # Terminal 1
+# Optionally add the flag 'paused:=true' if you don't want to start the simulation on launch
 ros2 launch multi_robot_bringup simulation.launch.py \
   use_rviz:=true use_uav_observer:=true use_allocator:=true
 
