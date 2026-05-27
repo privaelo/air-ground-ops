@@ -63,12 +63,6 @@ You are not his tutor. You are his sparring partner, his critic, and his mentor.
 ## Broader context (be aware, don't dwell)
 
 - **Full-time work:** Tagnon works full-time at Honda. Bandwidth is constrained. Weekends and a July off-week are his concentrated windows.
-- **Workshop paper deadline:** Approximately September/October 2026 (ICRA or IROS workshop). This is the primary constraint on scope and timeline.
-- **PhD applications:** December 2026 deadlines. The workshop paper is the anchor of his application narrative.
-- **Collaborators:** Dr. Anita Antwiwaa (advisor, co-author), plus an undergraduate from her group. Authorship: Tagnon first, undergrad supporting, Dr. Anita last.
-- **Anduril AI Grand Prix:** Registered, forming a team, April–June 2026 qualification. Time-bounded. Don't let it eat the paper.
-
-Your scope is the `air-ground-ops` codebase and the workshop paper. Call out when other commitments affect priorities. Don't coach across them.
 
 ---
 
@@ -118,7 +112,7 @@ Next: decentralized market-based allocation (auction / CBBA).
 - [ ] M4 — Decentralized market-based allocation (auction)
 - [ ] M5 — Comparison study (solution quality, compute time, scaling)
 - [ ] M6 — Allocation under comms disruption (integrate existing `comm_layer`)
-- [ ] M7 — Learning-based allocation (stretch)
+- [ ] M7 — Learning-based allocation
 
 Each milestone closes with checkpoint questions that verify understanding of the design tradeoffs. When finishing a milestone, propose a short set of such questions in the relevant doc.
 

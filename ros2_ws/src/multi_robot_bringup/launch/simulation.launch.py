@@ -39,9 +39,9 @@ def _apply_pause_flag(context, *args, **kwargs):
 
 
 _UGV_CONFIGS = [
-    {'name': 'ugv_1', 'x': '-10.0', 'y':   '0.0', 'z': '0.0'},
-    {'name': 'ugv_2', 'x':  '10.0', 'y':   '0.0', 'z': '0.0'},
-    {'name': 'ugv_3', 'x':   '0.0', 'y':  '-7.0', 'z': '0.0'},
+    {'name': 'ugv_1', 'x':  '0.0', 'y': '-7.0', 'z': '0.0'},
+    {'name': 'ugv_2', 'x':  '1.0', 'y': '-7.0', 'z': '0.0'},
+    {'name': 'ugv_3', 'x': '-1.0', 'y': '-7.0', 'z': '0.0'},
 ]
 
 
@@ -103,11 +103,29 @@ def generate_launch_description():
         parameters=[{
             'uav_x': -2.0,
             'uav_y': 0.0,
-            'detection_radius': 50.0,
-            'target_ids': ['t1', 't2', 't3'],
-            'target_xs': [8.0, -8.0, 8.0],
-            'target_ys': [7.0, -7.0, -7.0],
+            'uav_z': 5.0,
+            'camera_pitch': 1.5708,
         }],
+        condition=IfCondition(use_uav_observer),
+    )
+
+    # Bridges the Gazebo logical camera topic into ROS under /uav_1/logical_camera.
+    logical_camera_bridge = Node(
+        package='ros_gz_bridge',
+        executable='parameter_bridge',
+        name='logical_camera_bridge',
+        output='screen',
+        arguments=[
+            '/world/urban_obstacles_world/model/uav_1/link/base_link'
+            '/sensor/logical_camera/logical_camera'
+            '@ros_gz_interfaces/msg/LogicalCameraImage'
+            '[gz.msgs.LogicalCameraImage'
+        ],
+        remappings=[(
+            '/world/urban_obstacles_world/model/uav_1/link/base_link'
+            '/sensor/logical_camera/logical_camera',
+            '/uav_1/logical_camera',
+        )],
         condition=IfCondition(use_uav_observer),
     )
 
@@ -330,7 +348,7 @@ def generate_launch_description():
         TimerAction(period=3.0, actions=bridge_actions),
 
         # UAV observer, allocator, goal followers, mission comms (opt-in; off by default).
-        TimerAction(period=3.5, actions=[observer_node]),
+        TimerAction(period=3.5, actions=[observer_node, logical_camera_bridge]),
         TimerAction(period=3.5, actions=[allocator_node]),
         TimerAction(period=4.0, actions=goal_follower_nodes),
         TimerAction(period=4.0, actions=[marker_node]),

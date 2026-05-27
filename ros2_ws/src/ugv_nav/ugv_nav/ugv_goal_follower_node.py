@@ -7,6 +7,23 @@ from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from std_msgs.msg import String
 
+# Obstacle geometry from urban_obstacles.sdf: (cx, cy, half_width, half_height).
+# Used only by the potential-field repulsion layer — sim-specific, not sensor-based.
+_OBSTACLES = [
+    (0.0,   0.0,  0.75, 2.00),   # block_1
+    (5.0,   4.0,  1.00, 1.50),   # block_2
+    (6.0,  -4.0,  1.00, 1.50),   # block_3
+    (-5.0,  3.0,  1.25, 1.25),   # block_4
+    (-6.0, -3.0,  1.25, 1.25),   # block_5
+    (0.0,  10.0, 15.00, 0.30),   # barrier_north
+    (0.0, -10.0, 15.00, 0.30),   # barrier_south
+    (-15.0, 0.0,  0.30, 10.00),  # barrier_west
+    (15.0,  0.0,  0.30, 10.00),  # barrier_east
+]
+
+# Expand each obstacle by this margin so the robot body clears the surface.
+_ROBOT_RADIUS = 0.55
+
 
 def _yaw_from_quaternion(q):
     return math.atan2(
@@ -19,6 +36,30 @@ def _normalize_angle(a):
     return (a + math.pi) % (2.0 * math.pi) - math.pi
 
 
+def _repulsive_force(px, py, cx, cy, hw, hh, influence_radius, k_rep):
+    """
+    Repulsive force from a rectangular obstacle (AABB) inflated by _ROBOT_RADIUS.
+    Returns (fx, fy) pointing away from the obstacle surface.
+    """
+    ihw = hw + _ROBOT_RADIUS
+    ihh = hh + _ROBOT_RADIUS
+
+    # Nearest point on the inflated rectangle
+    nx = max(cx - ihw, min(px, cx + ihw))
+    ny = max(cy - ihh, min(py, cy + ihh))
+
+    dx = px - nx
+    dy = py - ny
+    d = math.hypot(dx, dy)
+
+    if d >= influence_radius or d < 1e-6:
+        return 0.0, 0.0
+
+    # Standard APF repulsion: k * (1/d - 1/d0) * (1/d²)
+    mag = k_rep * (1.0 / d - 1.0 / influence_radius) * (1.0 / d ** 2)
+    return mag * dx / d, mag * dy / d
+
+
 class UGVGoalFollowerNode(Node):
     def __init__(self):
         super().__init__('ugv_goal_follower_node')
@@ -28,6 +69,9 @@ class UGVGoalFollowerNode(Node):
         self.declare_parameter('angular_speed', 0.8)
         self.declare_parameter('arrival_radius', 1.0)
         self.declare_parameter('heading_tolerance', 0.12)
+        self.declare_parameter('k_att', 1.0)
+        self.declare_parameter('k_rep', 4.0)
+        self.declare_parameter('influence_radius', 2.5)
 
         name = self.get_parameter('ugv_name').value
         self._ugv_name = name
@@ -35,9 +79,10 @@ class UGVGoalFollowerNode(Node):
         self._angular_speed = self.get_parameter('angular_speed').value
         self._arrival_radius = self.get_parameter('arrival_radius').value
         self._heading_tolerance = self.get_parameter('heading_tolerance').value
+        self._k_att = self.get_parameter('k_att').value
+        self._k_rep = self.get_parameter('k_rep').value
+        self._influence_radius = self.get_parameter('influence_radius').value
 
-        # OdometryPublisher reports world-frame absolute positions, so pose and
-        # goal are both kept in world frame — no spawn offset needed.
         self._pose = None   # (x, y, yaw) world frame
         self._goal = None   # (x, y) world frame
         self._arrived = False
@@ -71,6 +116,34 @@ class UGVGoalFollowerNode(Node):
                     )
                 return
 
+    def _potential_field_heading(self, x, y, gx, gy):
+        """
+        Compute desired heading from attractive + repulsive potential field.
+        Returns (desired_heading, resultant_magnitude).
+        """
+        # Attractive force: linear pull toward goal
+        dx_att = gx - x
+        dy_att = gy - y
+        dist_to_goal = math.hypot(dx_att, dy_att)
+        if dist_to_goal > 1e-6:
+            fx_att = self._k_att * dx_att / dist_to_goal
+            fy_att = self._k_att * dy_att / dist_to_goal
+        else:
+            fx_att, fy_att = 0.0, 0.0
+
+        # Repulsive forces from all obstacles
+        fx_rep, fy_rep = 0.0, 0.0
+        for cx, cy, hw, hh in _OBSTACLES:
+            frx, fry = _repulsive_force(
+                x, y, cx, cy, hw, hh, self._influence_radius, self._k_rep
+            )
+            fx_rep += frx
+            fy_rep += fry
+
+        fx = fx_att + fx_rep
+        fy = fy_att + fy_rep
+        return math.atan2(fy, fx), math.hypot(fx, fy)
+
     def _control_loop(self):
         cmd = Twist()
 
@@ -91,7 +164,7 @@ class UGVGoalFollowerNode(Node):
             self._cmd_pub.publish(cmd)
             return
 
-        desired_heading = math.atan2(gy - y, gx - x)
+        desired_heading, _ = self._potential_field_heading(x, y, gx, gy)
         heading_error = _normalize_angle(desired_heading - yaw)
 
         if abs(heading_error) > self._heading_tolerance:

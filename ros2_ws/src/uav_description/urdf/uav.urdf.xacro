@@ -1,7 +1,6 @@
 <?xml version="1.0"?>
 <robot name="uav" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <!-- UAV body -->
   <link name="base_link">
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -9,23 +8,65 @@
       <inertia ixx="0.02" ixy="0.0" ixz="0.0" iyy="0.02" iyz="0.0" izz="0.04"/>
     </inertial>
 
+    <!-- Central body -->
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
-      <geometry>
-        <box size="0.4 0.4 0.1"/>
-      </geometry>
-      <material name="gray">
-        <color rgba="0.6 0.6 0.6 1.0"/>
+      <geometry><cylinder radius="0.12" length="0.04"/></geometry>
+      <material name="body_dark">
+        <color rgba="0.30 0.30 0.33 1.0"/>
       </material>
+    </visual>
+
+    <!-- Arm NE-SW -->
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0.7854"/>
+      <geometry><box size="0.56 0.03 0.015"/></geometry>
+      <material name="arm_dark">
+        <color rgba="0.27 0.27 0.30 1.0"/>
+      </material>
+    </visual>
+
+    <!-- Arm NW-SE -->
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 -0.7854"/>
+      <geometry><box size="0.56 0.03 0.015"/></geometry>
+      <material name="arm_dark"/>
+    </visual>
+
+    <!-- Rotor NE -->
+    <visual>
+      <origin xyz="0.198 0.198 0.012" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.10" length="0.008"/></geometry>
+      <material name="rotor_gray">
+        <color rgba="0.60 0.60 0.65 1.0"/>
+      </material>
+    </visual>
+
+    <!-- Rotor NW -->
+    <visual>
+      <origin xyz="-0.198 0.198 0.012" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.10" length="0.008"/></geometry>
+      <material name="rotor_gray"/>
+    </visual>
+
+    <!-- Rotor SW -->
+    <visual>
+      <origin xyz="-0.198 -0.198 0.012" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.10" length="0.008"/></geometry>
+      <material name="rotor_gray"/>
+    </visual>
+
+    <!-- Rotor SE -->
+    <visual>
+      <origin xyz="0.198 -0.198 0.012" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.10" length="0.008"/></geometry>
+      <material name="rotor_gray"/>
     </visual>
 
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
-      <geometry>
-        <box size="0.4 0.4 0.1"/>
-      </geometry>
+      <geometry><cylinder radius="0.12" length="0.04"/></geometry>
     </collision>
   </link>
-
 
 </robot>

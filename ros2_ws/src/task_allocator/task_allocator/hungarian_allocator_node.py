@@ -21,6 +21,7 @@ class HungarianAllocatorNode(Node):
         # OdometryPublisher gives world-frame positions directly.
         self._positions = {name: None for name in self._ugv_names}
         self._targets = []
+        self._cached_assignment = None   # solved once, republished unchanged
 
         for name in self._ugv_names:
             self.create_subscription(
@@ -46,6 +47,10 @@ class HungarianAllocatorNode(Node):
         self._targets = data.get('targets', [])
 
     def _allocate(self):
+        if self._cached_assignment is not None:
+            self._pub.publish(self._cached_assignment)
+            return
+
         # Wait until all UGV positions are known and targets are available
         positions = {n: p for n, p in self._positions.items() if p is not None}
         if not positions or not self._targets:
@@ -79,6 +84,7 @@ class HungarianAllocatorNode(Node):
         total = round(sum(a['cost'] for a in assignments), 3)
         msg = String()
         msg.data = json.dumps({'assignments': assignments, 'total_cost': total})
+        self._cached_assignment = msg
         self._pub.publish(msg)
         self.get_logger().info(f'Assigned {len(assignments)} tasks, total cost {total}m')
 
