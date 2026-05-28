@@ -17,13 +17,6 @@ One UAV as an aerial observer detects targets in the environment and broadcasts 
 - **Urban obstacle world** — static barriers, Gazebo Harmonic
 - **Allocation strategies** — centralized optimization (Hungarian), decentralized auction (CBBA), comparison study
 
-## Current status
-
-Hungarian allocation end-to-end: UAV detects targets, allocator solves the assignment problem, UGVs navigate to their assigned targets. 
-
-<!--## Demo: Hungarian algorithm
-https://github.com/user-attachments/assets/e8433b71-6ec4-4faa-a1e9-a579bd446a06-->
-
 
 ## Stack
 
