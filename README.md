@@ -2,7 +2,9 @@
 
 A ROS 2 + Gazebo sandbox for studying and comparing Multi-Robot Task Allocation (MRTA) strategies with heterogeneous agents.
 
-<img width="800" height="450" alt="MRTA_Hungarian1-ezgif com-video-to-gif-converter" src="https://github.com/user-attachments/assets/4bfb70d4-baef-46f8-9a5a-67278a692008" />
+<!-- <img width="800" height="450" alt="MRTA_Hungarian1-ezgif com-video-to-gif-converter" src="https://github.com/user-attachments/assets/4bfb70d4-baef-46f8-9a5a-67278a692008" /> -->
+<img width="800" height="450" alt="MRTA_Demo2-ezgif com-video-to-gif-converter" src="https://github.com/user-attachments/assets/656d0441-0bed-4bb2-9930-257ad6e9f9cc" />
+
 
 ## What it is
 
