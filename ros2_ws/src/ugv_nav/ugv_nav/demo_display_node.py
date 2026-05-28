@@ -49,7 +49,7 @@ class DemoDisplayNode(Node):
         self.create_timer(0.3, self._check_arrivals)
 
         print(f'\n{_DSEP}')
-        print('  MRTA DEMO  ·  Hungarian Allocation')
+        print('  MRTA DEMO  ')
         print(f'{_DSEP}')
         print('  Waiting for robots and targets...')
 

@@ -10,6 +10,8 @@ from nav_msgs.msg import Odometry
 from std_msgs.msg import String
 
 
+
+
 class HungarianAllocatorNode(Node):
     def __init__(self):
         super().__init__('hungarian_allocator_node')
