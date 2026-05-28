@@ -56,7 +56,7 @@ source install/setup.bash
 ros2 launch multi_robot_bringup simulation.launch.py use_rviz:=false
 ```
 
-### Hungarian allocation demo
+### Demo
 
 Two terminals:
 
