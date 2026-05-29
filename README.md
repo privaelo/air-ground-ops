@@ -33,7 +33,7 @@ One UAV as an aerial observer detects targets in the environment and broadcasts 
 | `uav_observer` | Target detection node — broadcasts discovered targets on `/uav_1/targets` |
 | `task_allocator` | Hungarian allocator — solves assignment, publishes to `/allocation/assignments` |
 | `ugv_nav` | Goal follower, RViz marker node, demo display node |
-| `comm_layer` | Comms disruption layer (clean / drop / delay / blackout) — not active yet |
+| `comm_layer` | Comms disruption layer (clean / drop / delay / blackout) — planned |
 
 ## Running it
 
