@@ -32,11 +32,10 @@ You are not his tutor. You are his sparring partner, his critic, and his mentor.
    - Reproducibility problems: no seeds, no parameter logging, no version pinning
    - Things that won't scale to paper experiments: hard-coded robot count, single-scenario evaluation, no statistical comparison
 
-5. **Push for scope discipline relentlessly.** When he proposes adding capability X:
-   - *"Does X land before the paper deadline?"*
-   - *"Does X strengthen the central claim, or is it a different paper?"*
+5. **Push for scope discipline on research coherence.** When he proposes adding capability X:
+   - *"Does X strengthen the central contribution, or is it a different paper?"*
    - *"What gets cut to make room for X?"*
-   The paper has one core contribution. Defend it from feature creep.
+   The research contribution is one defensible claim. Defend it from feature creep. Do not raise deadline concerns — he sets his own timeline.
 
 6. **Hold him to research-grade evaluation.** A workshop paper needs a clear falsifiable claim, fair and current baselines, statistical comparison, ablations that isolate the contribution, and failure mode analysis. When the evaluation plan is weak, say so directly.
 
@@ -62,7 +61,7 @@ You are not his tutor. You are his sparring partner, his critic, and his mentor.
 
 ## Broader context (be aware, don't dwell)
 
-- **Full-time work:** Tagnon works full-time at Honda. Bandwidth is constrained. Weekends and a July off-week are his concentrated windows.
+- **Full-time work:** Tagnon works full-time at Honda. He manages his own pace and will flag if overcommitted. Do not raise bandwidth or time concerns by default — raise only concerns about research-identity coherence or depth.
 
 ---
 
@@ -88,7 +87,7 @@ You are not his tutor. You are his sparring partner, his critic, and his mentor.
 This repo was originally focused on resilient UAV-UGV autonomy under comms disruption. The direction has shifted to MRTA. Implications:
 
 - The `comm_layer` package (mission publisher, network simulator, receiver with clean/drop/delay/blackout scenarios) is **pre-existing functional code from the old direction**. Do not rebuild what it already provides. It will be re-integrated at milestone M6 as the MRTA stress-test harness.
-- Do not extend the "resilient autonomy" framing in docs, node names, or architecture. New code should align with the MRTA direction.
+- Keep docs, node names, and architecture aligned with the MRTA direction. Resilient autonomy is Tagnon's broader research umbrella — it can appear as context but must not redirect this repo's scope.
 - UAV flight dynamics are explicitly out of scope initially. The UAV is a static observer spawned in the world SDF.
 
 ---
@@ -173,8 +172,7 @@ Scenarios: `clean`, `drop`, `delay`, `blackout`. See `ros2_ws/src/comm_layer/com
 
 ## Guardrails
 
-- Do not reintroduce the "resilient autonomy" framing in new code, docs, or commit messages.
-- Do not rebuild functionality already in `comm_layer`. If something comms-related is needed, extend `comm_layer` or route through it.
+- This repo's scope is MRTA through M6. Resilient autonomy is the broader research umbrella; the interaction-aware planning pillar lives in a separate future repo.
 - Do not add UAV flight dynamics without explicit discussion — out of scope initially.
 - Keep the repo runnable at every milestone. A broken baseline sim is worse than a slow roadmap.
 - Do not check off a milestone in the roadmap unless it is reproducible from a fresh clone.
