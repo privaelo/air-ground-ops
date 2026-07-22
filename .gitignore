@@ -16,4 +16,5 @@ docs/
 # OS files
 .DS_Store
 
+#Claude files
 CLAUDE.md
